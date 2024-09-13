@@ -1,10 +1,5 @@
 use std::fmt::{Display, Formatter};
-
 use derive_more::From;
-use serde::Serialize;
-use serde_json::Value;
-// todo: Need to restructure this
-// - req a better process w/ 'universal' design
 
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -12,19 +7,21 @@ pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, From)]
 pub enum Error {
-    // Avoid using
-    General(String),
-
+    // Exceeded specified timeout
     TimeoutExceeded {
-        timeout: u64
+        current_timer_ms: u64,
+        timeout_ms: u64
     },
 
+    // Expected a value but did not find it.
     ValueNotFound,
 
     // Expected a value but didnt find it
+    // todo: Is this still needed?
     ValueExpected(String),
 
-    // Wrapper for serde json todo: Impl better handling
+    // Wrapper for serde json
+    // todo: Impl better handling??
     #[from]
     SerdeJson(serde_json::Error),
 }

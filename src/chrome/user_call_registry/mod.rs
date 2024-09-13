@@ -92,7 +92,8 @@ impl Chrome {
             if timeout != 0 {
                 if current >= timeout {
                     return Error::TimeoutExceeded {
-                        timeout: (timeout/1000) as u64 // s
+                        current_timer_ms: current as u64,
+                        timeout_ms: timeout as u64,
                     }.as_err();
                 }
 
