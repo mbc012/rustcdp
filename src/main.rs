@@ -3,18 +3,29 @@ use std::time::Duration;
 use rustcdp::chrome::Chrome;
 use rustcdp::chrome::UserCallMessage;
 //use rustcdp::chrome::domain::target::TargetDomain;
-use rustcdp::chrome::domain::target::types::TargetID;
+use rustcdp::chrome::domain::target::types::{TargetID, TargetInfoTypes};
 
 fn main () -> ! {
     let mut chrome = Chrome::new();
 
-    chrome.set_discover_targets();
+    let mut target_id = TargetID(String::from(""));
+    let targets = chrome.get_targets().unwrap();
 
-    std::thread::sleep(Duration::from_millis(2000));
-    chrome.set_auto_attach(true, true, false);
+    for target in targets {
+        println!("{}", serde_json::to_string_pretty(&target).unwrap());
 
-    std::thread::sleep(Duration::from_millis(2000));
-    chrome.get_targets();
+        match target.r#type {
+            TargetInfoTypes::Page => {
+                target_id = target.target_id;
+            },
+            _ => {}
+        }
+    }
+
+
+    println!("{}", target_id.0);
+    let sid = chrome.attach_to_target(&target_id, false).unwrap();
+    println!("{}", sid.as_str());
 
     loop {}
 }

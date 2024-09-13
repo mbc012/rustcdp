@@ -5,6 +5,7 @@ use std::time::Duration;
 
 
 use crate::chrome::browser::message::SocketMessage;
+use crate::chrome::user_call_registry::entry::UserCallEntry;
 use crate::chrome::user_call_registry::UserCallRegistry;
 
 impl UserCallRegistry {
@@ -20,10 +21,10 @@ impl UserCallRegistry {
                     break
                 }
 
-                let incoming_message = user_call_receiver.recv().expect("[UserCall Listener] Failed to receive SocketMessage");
-                println!("[UserCall Listener] {}", incoming_message.stringify()); // TODO
-
-
+                let incoming_message = user_call_receiver.recv().expect("[UserCall Listener] Failed get_result() receive SocketMessage");
+                println!("[UserCall Listener] [id={}] {:?}", incoming_message.get_id(), incoming_message.get_result()); // TODO
+                let mut guard = ucr.lock().expect("[UserCall Listener] Failed to get ucr lock");
+                guard.insert(incoming_message);
 
                 std::thread::sleep(Duration::from_millis(10))
             }

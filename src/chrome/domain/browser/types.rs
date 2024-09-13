@@ -1,12 +1,23 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BrowserVersion {
+    pub protocol_version: String,
+    pub product: String,
+    pub revision: String,
+    pub user_agent: String,
+    pub js_version: String,
+}
+
+
+#[derive(Serialize, Deserialize)]
 pub struct Bounds {
-    left: Option<i32>, // TODO: CHECK TYPE i32
-    top: Option<i32>,
-    width: Option<i32>,
-    height: Option<i32>,
-    window_state: Option<WindowState>
+    pub left: Option<i32>, // TODO: CHECK TYPE i32
+    pub top: Option<i32>,
+    pub width: Option<i32>,
+    pub height: Option<i32>,
+    pub window_state: Option<WindowState>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -21,28 +32,28 @@ pub struct BrowserContextID(pub String);
 
 #[derive(Serialize, Deserialize)]
 pub struct Bucket {
-    low: i32,
-    high: i32,
-    count: i32, // TODO: CHECK TYPE i32
+    pub low: i32,
+    pub high: i32,
+    pub count: i32, // TODO: CHECK TYPE i32
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Histogram {
-    name: String,
-    sum: i32,
-    count: i32,
-    buckets: Vec<Bucket>
+    pub name: String,
+    pub sum: i32,
+    pub count: i32,
+    pub buckets: Vec<Bucket>
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PermissionDescriptor {
-    name: String,
-    sysex: Option<bool>,
-    user_visible_only: Option<bool>,
-    allow_without_sanitization: Option<bool>,
-    allow_without_gesture: Option<bool>,
-    pan_tilt_zoom: Option<bool>,
+    pub name: String,
+    pub sysex: Option<bool>,
+    pub user_visible_only: Option<bool>,
+    pub allow_without_sanitization: Option<bool>,
+    pub allow_without_gesture: Option<bool>,
+    pub pan_tilt_zoom: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]

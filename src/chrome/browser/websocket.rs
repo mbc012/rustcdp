@@ -24,9 +24,9 @@ impl ChromeBrowser {
         let mut client = tungstenite::client::connect(ws_uri.as_str()).expect("Failed to connect to websocket.");
 
         match client.0.get_mut() {
-            MaybeTlsStream::Plain(stream) => stream.set_read_timeout(Some(Duration::from_millis(500))),
+            MaybeTlsStream::Plain(stream) => stream.set_read_timeout(Some(Duration::from_millis(500))).expect("Failed to set timeout for websocket stream."),
             _ => panic!("Unsupported stream type."),
-        }.expect("Failed to set timeout for websocket stream.");
+        };
 
         let ws = Arc::new(Mutex::new(client.0));
         ws
@@ -60,9 +60,7 @@ impl ChromeBrowser {
                 match msg {
                     Message::Text(txt) => {
                         let parse: SocketMessage = serde_json::from_str(&txt).expect("Failed to parse message into SocketMessage");
-                        //
-                        let p = &parse.stringify();
-                        println!("{}", p);
+                        //println!("{}", txt);
 
                         if parse.has_id() {
                             // User issued command

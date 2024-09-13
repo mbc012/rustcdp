@@ -5,51 +5,44 @@ use serde_json::Value;
 use crate::chrome::browser::message::UserCallMessage;
 use crate::chrome::Chrome;
 use crate::chrome::domain::target::types::{SessionID, TargetID, TargetInfo};
-
+use crate::error::{Result, Error};
 
 impl Chrome {
-    pub fn activate_target(&mut self, target_id: TargetID) {
+    pub fn activate_target(&mut self, target_id: &TargetID) {
         let msg = UserCallMessage::new("Target.activateTarget")
             .set_params({
                 let mut hm = HashMap::new();
-                hm.insert("targetId".into(), target_id.0.into());
+                hm.insert("targetId".into(), target_id.into());
                 hm
             });
 
         self.send_message(msg);
     }
 
-    pub fn attach_to_target(&mut self, target_id: TargetID, flatten: bool) {//-> SessionID {
+    pub fn attach_to_target(&mut self, target_id: &TargetID, flatten: bool) -> Result<SessionID> {
         let msg = UserCallMessage::new("Target.attachToTarget")
             .set_params({
                 let mut hm = HashMap::new();
-                hm.insert("targetId".into(), target_id.0.into());
+                hm.insert("targetId".into(), target_id.into());
                 hm.insert("flatten".into(), flatten.into());
                 hm
             });
 
-        let idx = self.send_message(msg);
-        let guard = self.user_call_registry.lock().expect("Failed to acquire UCR.");
-        let res = guard.wait(idx);
-        match res {
-            None => panic!("No response found; timed out"),
-            Some(val) => {
-                let value_extract = val.iter().next().unwrap().1.clone();
-                println!("{}", value_extract.to_string());
-                //let sid: SessionID = value_extract.into();
-                //sid
-                //TODO
-            }
-        }
+        let id = self.send_message(msg);
 
+        let val = self.wait_ucr(id)?
+            .get("sessionId").
+            ok_or(Error::ValueNotFound)?
+            .clone();
 
+        Ok(serde_json::from_value(val)?)
     }
 
-    pub fn close_target(&mut self, target_id: TargetID) {
+    pub fn close_target(&mut self, target_id: &TargetID) {
         let msg = UserCallMessage::new("Target.closeTarget")
             .set_params({
                 let mut hm = HashMap::new();
-                hm.insert("targetId".into(), target_id.0.into());
+                hm.insert("targetId".into(), target_id.into());
                 hm
             });
 
@@ -67,21 +60,17 @@ impl Chrome {
         self.send_message(msg);
     }
 
-    pub fn get_targets(&mut self) {//} -> Vec<TargetInfo> {
+    pub fn get_targets(&mut self) -> Result<Vec<TargetInfo>> {
         //target filter Vec<HashMap<String, Value>>
-        //let msg = UserCallMessage::new("Target.getTargets");
         let msg = UserCallMessage::new("Target.getTargets");
+        let id = self.send_message(msg);
 
-        let idx = self.send_message(msg);
-        // let guard = self.user_call_registry.lock().expect("Failed to acquire UCR.");
-        // let res = guard.wait(idx);
-        // match res {
-        //     None => panic!("No response found; timed out"),
-        //     Some(val) => {
-        //         let value_extract = val.iter().next().unwrap().1.clone();
-        //         println!("{}", value_extract.to_string());
-        //     }
-        // }
+        let res = self.wait_ucr(id)?
+            .get("targetInfos")
+            .ok_or(Error::ValueNotFound)?
+            .clone();
+
+        Ok(serde_json::from_value(res)?)
     }
 
     pub fn set_auto_attach(&mut self, auto_attach: bool, wait_debugger: bool, flatten: bool) {
@@ -96,7 +85,7 @@ impl Chrome {
                 hm
             });
 
-        let idx = self.send_message(msg);
+        let id = self.send_message(msg);
 
     }
 

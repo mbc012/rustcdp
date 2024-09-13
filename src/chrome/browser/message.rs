@@ -55,16 +55,16 @@ impl UserCallMessage {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct SocketMessage {
+pub struct SocketMessage {  // todo review result + error  types
     id:     Option<u32>,
     method: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     session_id: Option<SessionID>,
     #[serde(skip_serializing_if = "Option::is_none")]
     params: Option<HashMap<String, Value>>,
-    #[serde(skip_serializing)]
-    result: Option<HashMap<String, Value>>,
-    #[serde(skip_serializing)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    result: Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     error:  Option<HashMap<String, Value>>,
 }
 
@@ -95,27 +95,8 @@ impl SocketMessage {
         self.method.is_some()
     }
 
-    pub fn get_data(&self) -> HashMap<String, Value> {
-        // Checks the result, error and params and returns if not returns empty;
-        if let Some(result) = &self.result {
-            if !result.is_empty() {
-                return result.clone();
-            }
-        }
-
-        if let Some(error) = &self.error {
-            if !error.is_empty() {
-                return error.clone();
-            }
-        }
-
-        if let Some(params) = &self.params {
-            if !params.is_empty() {
-                return params.clone();
-            }
-        }
-
-        HashMap::new()
+    pub fn get_result(&self) -> Option<Value> {
+        self.result.clone()
     }
 
     pub fn get_method(&self) -> Option<String> {

@@ -4,7 +4,9 @@ use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::Receiver;
 use serde_json::Value;
 use crate::chrome::browser::message::SocketMessage;
+use crate::chrome::Chrome;
 use crate::chrome::user_call_registry::entry::UserCallEntry;
+use crate::error::{Result, Error};
 
 mod entry;
 mod listener;
@@ -20,7 +22,7 @@ impl UserCallRegistry {
         let registry = Self {
             entries: HashMap::new(),
             index: 1,
-            timeout: 5, // seconds
+            timeout: 10, // seconds
         };
 
         let arc_registry = Arc::new(Mutex::new(registry));
@@ -51,35 +53,14 @@ impl UserCallRegistry {
         sm_id
     }
 
-    pub fn retrieve(&self, idx: u32) -> Option<Vec<HashMap<String, Value>>> {  // TODO Change ret type
-        if self.entries.contains_key(&idx) {
-            let find = self.entries.get(&idx);
-            if find.is_some() && find.unwrap().has_response() {
-                Some(find.unwrap().get_data())
-            } else {
-                None
+    pub fn retrieve(&self, id: u32) -> Option<Value> {  // TODO Change ret type
+        if self.entries.contains_key(&id) {
+            let find = self.entries.get(&id);
+            if find.is_some() && find?.has_response() {
+                return Some(find?.get_data())
             }
-        } else {
-            None
         }
-    }
-
-    pub fn wait(&self, idx: u32) -> Option<HashMap<String, Value>> {
-        let mut call = None;
-        let mut current = 0;
-
-        while call.is_none() {
-            call = self.retrieve(idx);
-            if self.timeout != 0 {
-                if current >= self.timeout {
-                    break;
-                }
-                current += 1;
-            }
-            std::thread::sleep(std::time::Duration::from_secs(1));
-        }
-
-        Some(call.unwrap().first().unwrap().clone())
+        None
     }
 
     pub fn increment_index(&mut self) -> u32 {
@@ -88,3 +69,40 @@ impl UserCallRegistry {
         c
     }
 }
+
+
+impl Chrome {
+    pub fn wait_ucr(&self, id: u32) -> Result<Value> {
+        let mut call = None;
+        let mut t_set = false;
+        let mut timeout: u32 = 0; //ms
+        let mut current: u32 = 0; //ms
+
+        while call.is_none() {
+            let mut guard = self.user_call_registry.lock().unwrap();
+
+            if !t_set {
+                timeout = guard.timeout as u32 * 1000; // s to ms
+                t_set = true;
+            }
+
+            call = guard.retrieve(id);
+            drop(guard);
+
+            if timeout != 0 {
+                if current >= timeout {
+                    return Error::TimeoutExceeded {
+                        timeout: (timeout/1000) as u64 // s
+                    }.as_err();
+                }
+
+                current += 100;
+            }
+
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+
+        Ok(call.unwrap())
+    }
+}
+

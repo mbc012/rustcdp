@@ -2,10 +2,11 @@ use std::collections::HashMap;
 use serde_json::Value;
 use crate::chrome::browser::message::SocketMessage;
 
+#[derive(Debug)]
 pub struct UserCallEntry {
     id: u32,
     updated: bool,
-    data: Vec<HashMap<String, Value>>
+    data: Value
 }
 
 impl UserCallEntry {
@@ -19,7 +20,7 @@ impl UserCallEntry {
         self.updated
     }
 
-    pub fn get_data(&self) -> Vec<HashMap<String, Value>> {
+    pub fn get_data(&self) -> Value {
         self.data.clone()
     }
 }
@@ -29,7 +30,7 @@ impl From<SocketMessage> for UserCallEntry {
         Self {
             id: value.get_id(),
             updated: false,
-            data: vec![value.get_data()],
+            data: value.get_result().unwrap_or(Value::Null),
         }
     }
 }
