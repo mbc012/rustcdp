@@ -8,7 +8,7 @@ use crate::chrome::domain::target::types::{SessionID, TargetID, TargetInfo};
 use crate::error::{Result, Error};
 
 impl Chrome {
-    pub fn activate_target(&mut self, target_id: &TargetID) {
+    pub fn activate_target(&mut self, target_id: &TargetID) -> Result<()> {
         let msg = UserCallMessage::new("Target.activateTarget")
             .set_params({
                 let mut hm = HashMap::new();
@@ -16,7 +16,9 @@ impl Chrome {
                 hm
             });
 
-        self.send_message(msg);
+        let id = self.send_message(msg);
+        let _ = self.wait_ucr(id)?;
+        Ok(())
     }
 
     pub fn attach_to_target(&mut self, target_id: &TargetID, flatten: bool) -> Result<SessionID> {
@@ -38,7 +40,7 @@ impl Chrome {
         Ok(serde_json::from_value(val)?)
     }
 
-    pub fn close_target(&mut self, target_id: &TargetID) {
+    pub fn close_target(&mut self, target_id: &TargetID) -> Result<()> {
         let msg = UserCallMessage::new("Target.closeTarget")
             .set_params({
                 let mut hm = HashMap::new();
@@ -46,10 +48,12 @@ impl Chrome {
                 hm
             });
 
-        self.send_message(msg);
+        let id = self.send_message(msg);
+        let _ = self.wait_ucr(id)?;
+        Ok(())
     }
 
-    pub fn set_discover_targets(&mut self) {
+    pub fn set_discover_targets(&mut self) -> Result<()> {
         let msg = UserCallMessage::new("Target.setDiscoverTargets")
             .set_params({
                 let mut hm = HashMap::new();
@@ -57,7 +61,9 @@ impl Chrome {
                 hm
             });
 
-        self.send_message(msg);
+        let id = self.send_message(msg);
+        let _ = self.wait_ucr(id)?;
+        Ok(())
     }
 
     pub fn get_targets(&mut self) -> Result<Vec<TargetInfo>> {
@@ -73,7 +79,7 @@ impl Chrome {
         Ok(serde_json::from_value(res)?)
     }
 
-    pub fn set_auto_attach(&mut self, auto_attach: bool, wait_debugger: bool, flatten: bool) {
+    pub fn set_auto_attach(&mut self, auto_attach: bool, wait_debugger: bool, flatten: bool) -> Result<()> {
         // todo add filter
 
         let msg = UserCallMessage::new("Target.setAutoAttach")
@@ -86,6 +92,8 @@ impl Chrome {
             });
 
         let id = self.send_message(msg);
+        let _ = self.wait_ucr(id)?;
+        Ok(())
 
     }
 

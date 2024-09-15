@@ -4,14 +4,12 @@ use crate::chrome::{Chrome, UserCallMessage};
 use crate::chrome::domain::browser::types::{BrowserContextID, BrowserVersion};
 use crate::error::{Result, Error};
 
-// todo: Consideration: Should I add a Result<()> for void fn's. I suspect may need a lot of testing to impl.
-
 
 impl Chrome {
 
     /// Allows a site to use privacy sandbox features that require enrollment without the site actually being enrolled. Only supported on page targets.
     /// url - string
-    pub fn add_privacy_sandbox_enrollment_override<U: Into<Value>>(&mut self, url: U) {
+    pub fn add_privacy_sandbox_enrollment_override<U: Into<Value>>(&mut self, url: U) -> Result<()>{
         let msg = UserCallMessage::new("Browser.addPrivacySandboxEnrollmentOverride")
             .set_params({
                 let mut hm = HashMap::new();
@@ -19,14 +17,18 @@ impl Chrome {
                 hm
             });
 
-        let idx = self.send_message(msg);
+        let id = self.send_message(msg);
+        let _ = self.wait_ucr(id)?;
+        Ok(())
     }
 
 
     /// Close browser gracefully.
-    pub fn close(&mut self) {
+    pub fn close(&mut self) -> Result<()> {
         let msg = UserCallMessage::new("Browser.close");
-        let idx = self.send_message(msg);
+        let id = self.send_message(msg);
+        let _ = self.wait_ucr(id)?;
+        Ok(())
     }
 
     /// Returns version information.
@@ -38,9 +40,11 @@ impl Chrome {
     }
 
     /// Returns version information.
-    pub fn reset_permissions(&mut self, browser_context_id: Option<BrowserContextID>) {
+    pub fn reset_permissions(&mut self, browser_context_id: Option<BrowserContextID>) -> Result<()> {
         let msg = UserCallMessage::new("Browser.resetPermissions");
         let id = self.send_message(msg);
+        let _ = self.wait_ucr(id)?;
+        Ok(())
     }
 
 
